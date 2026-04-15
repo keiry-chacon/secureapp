@@ -1,0 +1,57 @@
+version: '3.9'
+
+services:
+
+  # ── Base de datos PostgreSQL ─────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: secureapp_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       secureapp
+      POSTGRES_USER:     secureuser
+      POSTGRES_PASSWORD: SuperSecret123!
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U secureuser -d secureapp"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - appnet
+
+  # ── Aplicación Node.js ───────────────────────────────────────────────────
+  app:
+    build: .
+    container_name: secureapp_web
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV:             production
+      PORT:                 3000
+      DB_HOST:              db
+      DB_PORT:              5432
+      DB_NAME:              secureapp
+      DB_USER:              secureuser
+      DB_PASSWORD:          SuperSecret123!
+      SESSION_SECRET:       cambia_esto_en_produccion_min64chars_1234567890abcdef
+      JWT_SECRET:           otro_secreto_jwt_diferente_min64chars_1234567890abcdef
+      JWT_EXPIRES_IN:       1h
+      LOGIN_MAX_ATTEMPTS:   5
+      LOGIN_BLOCK_MINUTES:  5
+    ports:
+      - "3000:3000"
+    networks:
+      - appnet
+    command: >
+      sh -c "node scripts/migrate.js && node scripts/seed.js && node src/app.js"
+
+volumes:
+  pg_data:
+
+networks:
+  appnet:
+    driver: bridge
