@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Usuarios — SecureApp</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<%
+const canWrite = currentUser.role === 'SuperAdmin';
+%>
+<nav class="navbar">
+  <div class="nav-brand">🔒 SecureApp</div>
+  <ul class="nav-links">
+    <li><a href="/dashboard">Dashboard</a></li>
+    <li><a href="/products">Productos</a></li>
+    <li><a href="/users" class="active">Usuarios</a></li>
+    <% if (currentUser.role === 'SuperAdmin') { %><li><a href="/audit">Auditoría</a></li><% } %>
+    <li class="nav-user">
+      <span>👤 <%= currentUser.username %> (<%= currentUser.role %>)</span>
+      <a href="/auth/logout" class="btn-logout">Salir</a>
+    </li>
+  </ul>
+</nav>
+<main class="container">
+  <div class="page-header">
+    <h1>👥 Usuarios</h1>
+    <% if (canWrite) { %>
+      <a href="/users/new" class="btn btn-primary">+ Nuevo Usuario</a>
+    <% } %>
+  </div>
+
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Email</th>
+          <th>Rol</th>
+          <th>Estado</th>
+          <th>Último login</th>
+          <th>IP último login</th>
+          <% if (canWrite) { %><th>Acciones</th><% } %>
+        </tr>
+      </thead>
+      <tbody>
+        <% users.forEach(u => { %>
+        <tr>
+          <td><strong><%= u.username %></strong></td>
+          <td><%= u.email %></td>
+          <td><span class="badge badge-role badge-<%= u.role_name %>"><%= u.role_name || '—' %></span></td>
+          <td>
+            <span class="badge <%= u.is_active ? 'badge-active' : 'badge-inactive' %>">
+              <%= u.is_active ? '✅ Activo' : '❌ Inactivo' %>
+            </span>
+          </td>
+          <td>
+            <% if (u.last_login_at) { %>
+              <%= new Date(u.last_login_at).toLocaleString('es-CR') %>
+            <% } else { %>
+              <span class="muted">Nunca</span>
+            <% } %>
+          </td>
+          <td><code><%= u.last_login_ip || '—' %></code></td>
+          <% if (canWrite) { %>
+          <td class="actions">
+            <a href="/users/<%= u.id %>/edit" class="btn btn-sm btn-secondary">✏️ Editar</a>
+            <% if (u.id !== currentUser.id) { %>
+            <form method="POST" action="/users/<%= u.id %>/delete" style="display:inline"
+                  onsubmit="return confirm('¿Eliminar usuario <%= u.username %>?')">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="btn btn-sm btn-danger">🗑️</button>
+            </form>
+            <% } %>
+          </td>
+          <% } %>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</main>
+<footer><p>ISW-1013 — Universidad Técnica Nacional © 2026</p></footer>
+</body>
+</html>
