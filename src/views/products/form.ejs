@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> — SecureApp</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<nav class="navbar">
+  <div class="nav-brand">🔒 SecureApp</div>
+  <ul class="nav-links">
+    <li><a href="/dashboard">Dashboard</a></li>
+    <li><a href="/products" class="active">Productos</a></li>
+    <li><a href="/users">Usuarios</a></li>
+    <% if (currentUser.role === 'SuperAdmin') { %><li><a href="/audit">Auditoría</a></li><% } %>
+    <li class="nav-user">
+      <span>👤 <%= currentUser.username %></span>
+      <a href="/auth/logout" class="btn-logout">Salir</a>
+    </li>
+  </ul>
+</nav>
+<main class="container">
+  <div class="page-header">
+    <h1><%= title %></h1>
+    <a href="/products" class="btn btn-secondary">← Volver</a>
+  </div>
+
+  <% if (errors.length > 0) { %>
+    <div class="alert alert-error">
+      <ul>
+        <% errors.forEach(e => { %><li><%= e.msg %></li><% }) %>
+      </ul>
+    </div>
+  <% } %>
+
+  <div class="form-card">
+    <form method="POST" action="<%= product.id ? '/products/' + product.id : '/products' %>" novalidate>
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="code">Código <span class="required">*</span></label>
+          <input type="text" id="code" name="code"
+                 value="<%= product.code || '' %>"
+                 maxlength="20" required pattern="[A-Za-z0-9]+"
+                 title="Solo letras y números, máximo 20 caracteres">
+          <small>Solo letras y números (ej: PROD001)</small>
+        </div>
+        <div class="form-group">
+          <label for="name">Nombre <span class="required">*</span></label>
+          <input type="text" id="name" name="name"
+                 value="<%= product.name || '' %>"
+                 maxlength="255" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="description">Descripción</label>
+        <textarea id="description" name="description"
+                  rows="3" maxlength="2000"><%= product.description || '' %></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="quantity">Cantidad <span class="required">*</span></label>
+          <input type="number" id="quantity" name="quantity"
+                 value="<%= product.quantity ?? '' %>"
+                 min="0" step="1" required>
+        </div>
+        <div class="form-group">
+          <label for="price">Precio <span class="required">*</span></label>
+          <input type="number" id="price" name="price"
+                 value="<%= product.price ?? '' %>"
+                 min="0" step="0.01" required>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <a href="/products" class="btn btn-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-primary">
+          <%= product.id ? '💾 Guardar cambios' : '➕ Crear producto' %>
+        </button>
+      </div>
+    </form>
+  </div>
+</main>
+<footer><p>ISW-1013 — Universidad Técnica Nacional © 2026</p></footer>
+<script>
+  // Validación frontend adicional (el backend valida igual — RS doble)
+  document.querySelector('form').addEventListener('submit', function(e) {
+    const code = document.getElementById('code').value;
+    if (!/^[A-Za-z0-9]+$/.test(code)) {
+      e.preventDefault();
+      alert('El código solo puede contener letras y números.');
+    }
+  });
+</script>
+</body>
+</html>
