@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Productos — SecureApp</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<%
+const canWrite = ['SuperAdmin','Registrador'].includes(currentUser.role);
+%>
+<nav class="navbar">
+  <div class="nav-brand">🔒 SecureApp</div>
+  <ul class="nav-links">
+    <li><a href="/dashboard">Dashboard</a></li>
+    <li><a href="/products" class="active">Productos</a></li>
+    <li><a href="/users">Usuarios</a></li>
+    <% if (currentUser.role === 'SuperAdmin') { %><li><a href="/audit">Auditoría</a></li><% } %>
+    <li class="nav-user">
+      <span>👤 <%= currentUser.username %> (<%= currentUser.role %>)</span>
+      <a href="/auth/logout" class="btn-logout">Salir</a>
+    </li>
+  </ul>
+</nav>
+<main class="container">
+  <div class="page-header">
+    <h1>📦 Productos</h1>
+    <% if (canWrite) { %>
+      <a href="/products/new" class="btn btn-primary">+ Nuevo Producto</a>
+    <% } %>
+  </div>
+
+  <% if (products.length === 0) { %>
+    <div class="empty-state">No hay productos registrados aún.</div>
+  <% } else { %>
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Nombre</th>
+          <th>Descripción</th>
+          <th>Cantidad</th>
+          <th>Precio</th>
+          <th>Creado por</th>
+          <th>Fecha</th>
+          <% if (canWrite) { %><th>Acciones</th><% } %>
+        </tr>
+      </thead>
+      <tbody>
+        <% products.forEach(p => { %>
+        <tr>
+          <td><code><%= p.code %></code></td>
+          <td><%- p.name %></td>
+          <td class="desc-cell"><%- p.description || '—' %></td>
+          <td class="num"><%= p.quantity %></td>
+          <td class="num">₡<%= parseFloat(p.price).toLocaleString('es-CR', {minimumFractionDigits:2}) %></td>
+          <td><%= p.created_by_name || '—' %></td>
+          <td><%= new Date(p.created_at).toLocaleDateString('es-CR') %></td>
+          <% if (canWrite) { %>
+          <td class="actions">
+            <a href="/products/<%= p.id %>/edit" class="btn btn-sm btn-secondary">✏️ Editar</a>
+            <form method="POST" action="/products/<%= p.id %>/delete" style="display:inline"
+                  onsubmit="return confirm('¿Eliminar este producto?')">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="btn btn-sm btn-danger">🗑️ Eliminar</button>
+            </form>
+          </td>
+          <% } %>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <% } %>
+</main>
+<footer><p>ISW-1013 — Universidad Técnica Nacional © 2026</p></footer>
+</body>
+</html>
