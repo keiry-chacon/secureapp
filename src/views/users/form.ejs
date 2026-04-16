@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> — SecureApp</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<nav class="navbar">
+  <div class="nav-brand">🔒 SecureApp</div>
+  <ul class="nav-links">
+    <li><a href="/dashboard">Dashboard</a></li>
+    <li><a href="/products">Productos</a></li>
+    <li><a href="/users" class="active">Usuarios</a></li>
+    <li><a href="/audit">Auditoría</a></li>
+    <li class="nav-user">
+      <span>👤 <%= currentUser.username %></span>
+      <a href="/auth/logout" class="btn-logout">Salir</a>
+    </li>
+  </ul>
+</nav>
+<main class="container">
+  <div class="page-header">
+    <h1><%= title %></h1>
+    <a href="/users" class="btn btn-secondary">← Volver</a>
+  </div>
+
+  <% if (errors.length > 0) { %>
+    <div class="alert alert-error">
+      <ul><% errors.forEach(e => { %><li><%= e.msg %></li><% }) %></ul>
+    </div>
+  <% } %>
+
+  <div class="form-card">
+    <form method="POST" action="<%= formUser.id ? '/users/' + formUser.id : '/users' %>" novalidate>
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="username">Username <span class="required">*</span></label>
+          <input type="text" id="username" name="username"
+                 value="<%= formUser.username || '' %>"
+                 minlength="3" maxlength="50" required pattern="[A-Za-z0-9]+">
+        </div>
+        <div class="form-group">
+          <label for="email">Email <span class="required">*</span></label>
+          <input type="email" id="email" name="email"
+                 value="<%= formUser.email || '' %>"
+                 maxlength="255" required>
+        </div>
+      </div>
+
+      <% if (!formUser.id) { %>
+      <div class="form-group">
+        <label for="password">Contraseña <span class="required">*</span></label>
+        <input type="password" id="password" name="password"
+               minlength="8" maxlength="100" required autocomplete="new-password">
+        <small>Mínimo 8 caracteres, una mayúscula, un número y un símbolo.</small>
+      </div>
+      <% } %>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="role_id">Rol <span class="required">*</span></label>
+          <select id="role_id" name="role_id" required>
+            <option value="">— Selecciona un rol —</option>
+            <% roles.forEach(r => { %>
+              <option value="<%= r.id %>" <%= String(formUser.role_id) === String(r.id) ? 'selected' : '' %>>
+                <%= r.name %>
+              </option>
+            <% }) %>
+          </select>
+        </div>
+        <% if (formUser.id) { %>
+        <div class="form-group">
+          <label>Estado</label>
+          <label class="checkbox-label">
+            <input type="checkbox" name="is_active" <%= formUser.is_active ? 'checked' : '' %>>
+            Usuario activo
+          </label>
+        </div>
+        <% } %>
+      </div>
+
+      <div class="form-actions">
+        <a href="/users" class="btn btn-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-primary">
+          <%= formUser.id ? '💾 Guardar cambios' : '➕ Crear usuario' %>
+        </button>
+      </div>
+    </form>
+  </div>
+</main>
+<footer><p>ISW-1013 — Universidad Técnica Nacional © 2026</p></footer>
+</body>
+</html>
