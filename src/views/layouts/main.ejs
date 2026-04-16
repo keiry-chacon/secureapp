@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> — SecureApp</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <% if (locals.currentUser) { %>
+  <nav class="navbar">
+    <div class="nav-brand">🔒 SecureApp</div>
+    <ul class="nav-links">
+      <li><a href="/dashboard">Dashboard</a></li>
+      <li><a href="/products">Productos</a></li>
+      <% if (['SuperAdmin','Registrador','Auditor'].includes(currentUser.role)) { %>
+        <li><a href="/users">Usuarios</a></li>
+      <% } %>
+      <% if (currentUser.role === 'SuperAdmin') { %>
+        <li><a href="/audit">Auditoría</a></li>
+      <% } %>
+      <li class="nav-user">
+        <span>👤 <%= currentUser.username %> (<%= currentUser.role %>)</span>
+        <a href="/auth/logout" class="btn-logout">Salir</a>
+      </li>
+    </ul>
+  </nav>
+  <% } %>
+
+  <main class="container">
+    <%- body %>
+  </main>
+
+  <footer>
+    <p>ISW-1013 — Universidad Técnica Nacional © 2026</p>
+  </footer>
+</body>
+</html>
