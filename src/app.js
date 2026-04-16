@@ -37,12 +37,12 @@ app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
-  rolling: true,              // resetea el timeout con cada request
+  rolling: true,                                      // resetea el timeout con cada request
   cookie: {
-    httpOnly: true,           // RS-04: no accesible desde JS del cliente
-    secure:   process.env.NODE_ENV === 'production',  // RS-04: solo HTTPS en producción
-    sameSite: 'strict',       // RS-03: previene CSRF básico
-    maxAge:   5 * 60 * 1000,  // RS-04: 5 minutos de inactividad
+    httpOnly: true,                                   // RS-04: no accesible desde JS del cliente
+    secure:   process.env.NODE_ENV === 'development',  // RS-04: solo HTTPS en producción
+    sameSite: 'strict',                               // RS-03: previene CSRF básico
+    maxAge:   5 * 60 * 1000,                          // RS-04: 5 minutos de inactividad
   },
 }));
 
