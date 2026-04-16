@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — SecureApp</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<%- include('layouts/main', { body: `
+  <div class="page-header">
+    <h1>Dashboard</h1>
+    <p>Bienvenido, <strong>${currentUser.username}</strong>. Tu rol es <span class="badge badge-role">${currentUser.role}</span>.</p>
+  </div>
+  <div class="card-grid">
+    <a href="/products" class="card-link">
+      <div class="card"><h3>📦 Productos</h3><p>Gestión de inventario</p></div>
+    </a>
+    <a href="/users" class="card-link">
+      <div class="card"><h3>👥 Usuarios</h3><p>Gestión de cuentas</p></div>
+    </a>
+    ${currentUser.role === 'SuperAdmin' ? '<a href="/audit" class="card-link"><div class="card"><h3>📋 Auditoría</h3><p>Log de eventos de seguridad</p></div></a>' : ''}
+  </div>
+` }) %>
+</body>
+</html>
