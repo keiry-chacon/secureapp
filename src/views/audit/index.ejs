@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Log de Auditoría — SecureApp</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<nav class="navbar">
+  <div class="nav-brand">🔒 SecureApp</div>
+  <ul class="nav-links">
+    <li><a href="/dashboard">Dashboard</a></li>
+    <li><a href="/products">Productos</a></li>
+    <li><a href="/users">Usuarios</a></li>
+    <li><a href="/audit" class="active">Auditoría</a></li>
+    <li class="nav-user">
+      <span>👤 <%= currentUser.username %></span>
+      <a href="/auth/logout" class="btn-logout">Salir</a>
+    </li>
+  </ul>
+</nav>
+<main class="container">
+  <div class="page-header">
+    <h1>📋 Log de Auditoría</h1>
+    <span class="muted">Total: <%= total %> eventos</span>
+  </div>
+
+  <div class="table-wrapper">
+    <table class="data-table audit-table">
+      <thead>
+        <tr>
+          <th>Timestamp</th>
+          <th>Evento</th>
+          <th>Usuario</th>
+          <th>IP</th>
+          <th>Objetivo</th>
+          <th>Ruta</th>
+          <th>Detalles</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% logs.forEach(log => { %>
+        <tr class="event-<%= log.event_type.toLowerCase().replace('_','-') %>">
+          <td class="mono"><%= new Date(log.created_at).toLocaleString('es-CR') %></td>
+          <td>
+            <span class="badge event-badge event-<%= log.event_type %>">
+              <%= log.event_type %>
+            </span>
+          </td>
+          <td><%= log.username || '—' %></td>
+          <td class="mono"><%= log.ip_address %></td>
+          <td>
+            <% if (log.target_type) { %>
+              <code><%= log.target_type %>#<%= log.target_id %></code>
+            <% } else { %>—<% } %>
+          </td>
+          <td class="mono"><%= log.route || '—' %></td>
+          <td>
+            <% if (log.details) { %>
+              <details>
+                <summary>Ver</summary>
+                <pre class="details-pre"><%= JSON.stringify(log.details, null, 2) %></pre>
+              </details>
+            <% } else { %>—<% } %>
+          </td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Paginación -->
+  <div class="pagination">
+    <% if (page > 1) { %>
+      <a href="/audit?page=<%= page-1 %>" class="btn btn-sm btn-secondary">← Anterior</a>
+    <% } %>
+    <span>Página <%= page %> de <%= Math.ceil(total/limit) || 1 %></span>
+    <% if (page * limit < total) { %>
+      <a href="/audit?page=<%= page+1 %>" class="btn btn-sm btn-secondary">Siguiente →</a>
+    <% } %>
+  </div>
+</main>
+<footer><p>ISW-1013 — Universidad Técnica Nacional © 2026</p></footer>
+</body>
+</html>

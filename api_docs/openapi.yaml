@@ -1,0 +1,264 @@
+openapi: 3.0.3
+info:
+  title: SecureApp API
+  description: |
+    API REST de SecureApp — Proyecto 2 ISW-1013.
+    
+    **Autenticación:** Primero obtén un token JWT desde la sesión web
+    haciendo `POST /auth/token`. El token se almacena en una cookie
+    HttpOnly llamada `api_token` y se envía automáticamente en cada
+    request (no lo copies en localStorage).
+  version: "1.0.0"
+
+servers:
+  - url: http://localhost:3000
+    description: Local
+  - url: https://TU-URL.ngrok-free.app
+    description: ngrok (pentest / defensa)
+
+tags:
+  - name: Auth
+  - name: Products
+  - name: Users
+
+paths:
+
+  /auth/token:
+    post:
+      tags: [Auth]
+      summary: Genera un JWT para usar la API
+      description: Requiere tener sesión web activa (haber hecho login en el navegador).
+      responses:
+        '200':
+          description: Token generado y guardado en cookie HttpOnly
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  expiresIn: { type: string, example: "1h" }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/health:
+    get:
+      tags: [Auth]
+      summary: Health check (público)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: ok }
+                  timestamp: { type: string, format: date-time }
+
+  # ── Productos ─────────────────────────────────────────────────────────
+  /api/products:
+    get:
+      tags: [Products]
+      summary: Listar todos los productos
+      security: [{ cookieAuth: [] }]
+      description: Roles permitidos: SuperAdmin, Registrador, Auditor
+      responses:
+        '200':
+          description: Lista de productos
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Product' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+    post:
+      tags: [Products]
+      summary: Crear un producto
+      security: [{ cookieAuth: [] }]
+      description: Roles permitidos: SuperAdmin, Registrador
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProductInput' }
+      responses:
+        '201':
+          description: Producto creado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/Product' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409':
+          description: Código duplicado
+        '422':
+          description: Errores de validación
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ValidationErrors' }
+
+  /api/products/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer }
+
+    get:
+      tags: [Products]
+      summary: Obtener un producto por ID
+      security: [{ cookieAuth: [] }]
+      responses:
+        '200':
+          description: Producto encontrado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/Product' }
+        '404':
+          description: No encontrado
+
+    put:
+      tags: [Products]
+      summary: Actualizar un producto
+      security: [{ cookieAuth: [] }]
+      description: Roles permitidos: SuperAdmin, Registrador
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProductInput' }
+      responses:
+        '200':
+          description: Actualizado correctamente
+        '422': { description: Errores de validación }
+
+    delete:
+      tags: [Products]
+      summary: Eliminar un producto
+      security: [{ cookieAuth: [] }]
+      description: Roles permitidos: SuperAdmin, Registrador
+      responses:
+        '200':
+          description: Eliminado correctamente
+
+  # ── Usuarios ──────────────────────────────────────────────────────────
+  /api/users:
+    get:
+      tags: [Users]
+      summary: Listar todos los usuarios
+      security: [{ cookieAuth: [] }]
+      description: Roles permitidos: SuperAdmin, Auditor, Registrador. No incluye password_hash.
+      responses:
+        '200':
+          description: Lista de usuarios
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/UserPublic' }
+
+  /api/users/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer }
+    get:
+      tags: [Users]
+      summary: Obtener un usuario por ID
+      security: [{ cookieAuth: [] }]
+      description: Roles permitidos: SuperAdmin únicamente
+      responses:
+        '200':
+          description: Usuario encontrado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/UserPublic' }
+        '404': { description: No encontrado }
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: api_token
+      description: JWT guardado en cookie HttpOnly. Obtenerlo con POST /auth/token.
+
+  responses:
+    Unauthorized:
+      description: Token JWT ausente o inválido
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error: { type: string, example: "Token requerido." }
+    Forbidden:
+      description: Rol insuficiente
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error: { type: string, example: "Acceso denegado." }
+
+  schemas:
+    Product:
+      type: object
+      properties:
+        id:          { type: integer }
+        code:        { type: string, example: PROD001 }
+        name:        { type: string }
+        description: { type: string, nullable: true }
+        quantity:    { type: integer, minimum: 0 }
+        price:       { type: number, format: float }
+        created_at:  { type: string, format: date-time }
+
+    ProductInput:
+      type: object
+      required: [code, name, quantity, price]
+      properties:
+        code:        { type: string, maxLength: 20, pattern: '^[A-Za-z0-9]+$' }
+        name:        { type: string, maxLength: 255 }
+        description: { type: string, maxLength: 2000 }
+        quantity:    { type: integer, minimum: 0 }
+        price:       { type: number, minimum: 0 }
+
+    UserPublic:
+      type: object
+      properties:
+        id:            { type: integer }
+        username:      { type: string }
+        email:         { type: string, format: email }
+        role:          { type: string, enum: [SuperAdmin, Auditor, Registrador] }
+        is_active:     { type: boolean }
+        last_login_at: { type: string, format: date-time, nullable: true }
+
+    ValidationErrors:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field: { type: string }
+              msg:   { type: string }
